@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>텍스트 비교기 — 다른 점 색깔로 표시</title>
+  <style>
+    :root {
+      --bg-light: #f5f5f5;
+      --card-light: #ffffff;
+      --text-light: #222222;
+      --muted-light: #555555;
+
+      --bg-dark: #0f172a;
+      --card-dark: #0b1220;
+      --text-dark: #e6eef8;
+      --muted-dark: #9fb0d3;
+    }
+    body {
+      font-family: Inter, system-ui, Segoe UI, Roboto, 'Helvetica Neue', Arial;
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 28px;
+    }
+    @media (prefers-color-scheme: dark) {
+      body { background: linear-gradient(180deg, var(--bg-dark) 0%, #071827 100%); color: var(--text-dark); }
+      textarea, .pane { background: #061124; color: var(--text-dark); border: 1px solid rgba(255,255,255,0.04); }
+      .small, p.lead, .pane h3 { color: var(--muted-dark); }
+    }
+    @media (prefers-color-scheme: light) {
+      body { background: var(--bg-light); color: var(--text-light); }
+      textarea, .pane { background: var(--card-light); color: var(--text-light); border: 1px solid rgba(0,0,0,0.1); }
+      .small, p.lead, .pane h3 { color: var(--muted-light); }
+    }
+    .wrap { width: 100%; max-width: 1100px; }
+    header { display: flex; gap: 12px; align-items: center; margin-bottom: 14px; }
+    h1 { font-size: 18px; margin: 0; }
+    p.lead { margin: 0; font-size: 13px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    textarea { width: 100%; height: 220px; resize: vertical; padding: 12px; border-radius: 8px; font-size: 13px; }
+    .controls { display: flex; gap: 8px; align-items: center; margin: 12px 0; }
+    button { background: #1f6feb; border: none; padding: 8px 12px; border-radius: 8px; color: white; cursor: pointer; }
+    button.secondary { background: transparent; border: 1px solid rgba(255,255,255,0.06); }
+    .result { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+    .pane { padding: 12px; border-radius: 10px; min-height: 160px; overflow: auto; }
+    .pane h3 { margin: 0 0 8px 0; font-size: 13px; }
+    .tok { padding: 1px 3px; border-radius: 4px; }
+    .same { }
+    .added { background: rgba(46, 204, 113, 0.12); color: #2ecc71; }
+    .removed { background: rgba(255, 99, 71, 0.08); color: #e74c3c; text-decoration: line-through; }
+    .changed { background: rgba(255, 199, 61, 0.10); color: #f1c40f; }
+    footer { margin-top: 10px; font-size: 13px; }
+    .small { font-size: 12px; }
+    @media (max-width: 900px) { .grid, .result { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>텍스트 비교기</h1>
+      <p class="lead">두 텍스트를 입력하면 서로 다른 부분을 색으로 표시합니다. (단어 단위 비교)</p>
+    </header>
+    <div class="grid">
+      <div>
+        <label class="small">텍스트 A</label>
+        <textarea id="a">안녕하세요. 저는 ChatGPT입니다.
+이 예시는 서로 다른 부분을 색으로 표시합니다.</textarea>
+      </div>
+      <div>
+        <label class="small">텍스트 B</label>
+        <textarea id="b">안녕하세요. 저는 ChatGPT입니다!
+이 예제는 다른 부분을 색으로 강조합니다.</textarea>
+      </div>
+    </div>
+    <div class="controls">
+      <button id="compare">비교</button>
+      <button class="secondary" id="swap">A ↔ B 바꾸기</button>
+      <button class="secondary" id="clear">초기화</button>
+      <label style="margin-left:auto" class="small"><input type="checkbox" id="case"> 대소문자 무시</label>
+    </div>
+    <div class="result" id="out">
+      <div class="pane"><h3>A (원문)</h3><div id="outA"></div></div>
+      <div class="pane"><h3>B (비교 대상)</h3><div id="outB"></div></div>
+    </div>
+    <footer>
+      <div class="small">색 의미: <span class="added">추가</span> <span class="removed">삭제</span> <span class="changed">변경</span></div>
+    </footer>
+  </div>
+  <script>
+    function tokenize(s){ return s.match(/\s+|[^\s]+/g) || []; }
+    function buildLCS(a,b){
+      const n=a.length, m=b.length;
+      const dp = Array.from({length:n+1},()=>new Uint32Array(m+1));
+      for(let i=n-1;i>=0;--i){
+        for(let j=m-1;j>=0;--j){
+          if(a[i]===b[j]) dp[i][j]=dp[i+1][j+1]+1;
+          else dp[i][j]=Math.max(dp[i+1][j], dp[i][j+1]);
+        }
+      }
+      let i=0,j=0; const common=[];
+      while(i<n && j<m){
+        if(a[i]===b[j]){ common.push({i,j,token:a[i]}); i++; j++; }
+        else if(dp[i+1][j] >= dp[i][j+1]) i++; else j++;
+      }
+      return common;
+    }
+    function renderDiff(aText,bText, caseInsensitive=false){
+      const aTok = tokenize(aText);
+      const bTok = tokenize(bText);
+      const aComp = caseInsensitive ? aTok.map(t=>t.toLowerCase()) : aTok.slice();
+      const bComp = caseInsensitive ? bTok.map(t=>t.toLowerCase()) : bTok.slice();
+      const commons = buildLCS(aComp,bComp);
+      const aMark = Array(aTok.length).fill('removed');
+      const bMark = Array(bTok.length).fill('added');
+      for(const c of commons){ aMark[c.i] = 'same'; bMark[c.j] = 'same'; }
+      const outA = aTok.map((t,i)=>`<span class="tok ${aMark[i]}">${escapeHtml(t)}</span>`).join('');
+      const outB = bTok.map((t,i)=>`<span class="tok ${bMark[i]}">${escapeHtml(t)}</span>`).join('');
+      return {outA,outB};
+    }
+    function escapeHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    const aEl = document.getElementById('a');
+    const bEl = document.getElementById('b');
+    const outA = document.getElementById('outA');
+    const outB = document.getElementById('outB');
+    document.getElementById('compare').addEventListener('click',()=>{
+      const ci = document.getElementById('case').checked;
+      const r = renderDiff(aEl.value, bEl.value, ci);
+      outA.innerHTML = r.outA;
+      outB.innerHTML = r.outB;
+    });
+    document.getElementById('swap').addEventListener('click',()=>{
+      const t=aEl.value; aEl.value=bEl.value; bEl.value=t; document.getElementById('compare').click();
+    });
+    document.getElementById('clear').addEventListener('click',()=>{
+      aEl.value=''; bEl.value=''; outA.innerHTML=''; outB.innerHTML='';
+    });
+    document.getElementById('compare').click();
+  </script>
+</body>
+</html>
