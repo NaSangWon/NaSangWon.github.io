@@ -257,7 +257,7 @@
 
             return { outA, outB };
         }
-        function escapeHtml(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+        function escapeHtml(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>'); }
 
         const aEl = document.getElementById('a');
         const bEl = document.getElementById('b');
