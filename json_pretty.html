@@ -1,59 +1,63 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8">
-  <title>JSON Pretty Print</title>
-  <link rel="stylesheet" href="style.css">
+	<meta charset="UTF-8">
+	<title>JSON Pretty Print</title>
+	<link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-  <h1>JSON Pretty Print</h1>
-  <textarea id="input" placeholder="Paste your JSON here..."></textarea>
-  <button id="prettyPrint">Pretty Print</button>
-  <div>
-    <input type="checkbox" id ="singlequote", name="singlequote", checked>
-    <label for="singlequote">Allow Single Quote</label>
-  </div>
-  <pre id="output"></pre>
+	<h1>JSON Pretty Print</h1>
+	<textarea id="input" placeholder="Paste your JSON here..."></textarea>
+	<button id="prettyPrint">Pretty Print</button>
+	<div>
+		<input type="checkbox" id="singlequote" , name="singlequote" , checked>
+		<label for="singlequote">Allow Single Quote</label>
+	</div>
+	<pre id="output"></pre>
 
-  <script>
-    function replaceSingleQuote(input) {
-      let out = '';
+	<script>
+		function replaceSingleQuote(input) {
+			let out = '';
 
-      for (let i = 0; i < input.length; i++) {
-        if ((i < 1 || i >= input.length - 1) && input[i] == "\\") {
-          continue
-        }
+			for (let i = 0; i < input.length; i++) {
+				if (input[i] == "'") {
+					// escape 된 singe quote는 바꾸지 않음.
+					if (i > 1 && input[i - 1] == "\\") {
+						out += input[i]
+						continue
+					}
+					out += '"'
+				} else {
+					out += input[i]
+				}
+			}
 
-        if (input[i] == "'") {
-          out += '"'
-        } else {
-          out += input[i]
-        }
-      }
+			return out
+		}
 
-      return out
-    }
+		function prettyPrint(allowSingeQuote = True) {
+			let input = document.getElementById('input').value;
+			const output = document.getElementById('output');
 
-    function prettyPrint(allowSingeQuote = True) {
-      let input = document.getElementById('input').value;
-      const output = document.getElementById('output');
+			if (allowSingeQuote) {
+				input = replaceSingleQuote(input)
+			}
 
-      if (allowSingeQuote) {
-        input = replaceSingleQuote(input)
-      }
+			try {
+				const obj = JSON.parse(input);
+				output.textContent = JSON.stringify(obj, null, 2);
+			} catch (e) {
+				output.textContent = 'Invalid JSON: ' + e.message;
+			}
+		}
 
-      try {
-        const obj = JSON.parse(input);
-        output.textContent = JSON.stringify(obj, null, 2);
-      } catch (e) {
-        output.textContent = 'Invalid JSON: ' + e.message;
-      }
-    }
-
-    document.getElementById('prettyPrint').addEventListener('click', () => {
-      const singlequote = document.getElementById('singlequote').checked;
-      prettyPrint(singlequote)
-    })
-  </script>
+		document.getElementById('prettyPrint').addEventListener('click', () => {
+			const singlequote = document.getElementById('singlequote').checked;
+			prettyPrint(singlequote)
+		})
+	</script>
 </body>
+
 </html>
