@@ -8,9 +8,52 @@
 <body>
   <h1>JSON Pretty Print</h1>
   <textarea id="input" placeholder="Paste your JSON here..."></textarea>
-  <button onclick="prettyPrint()">Pretty Print</button>
+  <button id="prettyPrint">Pretty Print</button>
+  <div>
+    <input type="checkbox" id ="singlequote", name="singlequote", checked>
+    <label for="singlequote">Allow Single Quote</label>
+  </div>
   <pre id="output"></pre>
 
-  <script src="script.js"></script>
+  <script>
+    function replaceSingleQuote(input) {
+      let out = '';
+
+      for (let i = 0; i < input.length; i++) {
+        if ((i < 1 || i >= input.length - 1) && input[i] == "\\") {
+          continue
+        }
+
+        if (input[i] == "'") {
+          out += '"'
+        } else {
+          out += input[i]
+        }
+      }
+
+      return out
+    }
+
+    function prettyPrint(allowSingeQuote = True) {
+      let input = document.getElementById('input').value;
+      const output = document.getElementById('output');
+
+      if (allowSingeQuote) {
+        input = replaceSingleQuote(input)
+      }
+
+      try {
+        const obj = JSON.parse(input);
+        output.textContent = JSON.stringify(obj, null, 2);
+      } catch (e) {
+        output.textContent = 'Invalid JSON: ' + e.message;
+      }
+    }
+
+    document.getElementById('prettyPrint').addEventListener('click', () => {
+      const singlequote = document.getElementById('singlequote').checked;
+      prettyPrint(singlequote)
+    })
+  </script>
 </body>
 </html>
