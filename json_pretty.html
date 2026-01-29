@@ -15,6 +15,10 @@
 		<input type="checkbox" id="singlequote" , name="singlequote" , checked>
 		<label for="singlequote">Allow Single Quote</label>
 	</div>
+	<div>
+		<input type="checkbox" id="acceptnone", name="acceptnone", checked>
+		<label for="acceptnone">Accept "None" Keyword</label>
+	</div>
 	<pre id="output"></pre>
 
 	<script>
@@ -37,12 +41,20 @@
 			return out
 		}
 
-		function prettyPrint(allowSingeQuote = True) {
+		function replaceNone(input) {
+			return input.replace("None", "null");
+		}
+
+		function prettyPrint(allowSingeQuote = True, acceptNone = True) {
 			let input = document.getElementById('input').value;
 			const output = document.getElementById('output');
 
 			if (allowSingeQuote) {
 				input = replaceSingleQuote(input)
+			}
+
+			if (acceptNone) {
+				input = replaceNone(input)
 			}
 
 			try {
@@ -55,7 +67,8 @@
 
 		document.getElementById('prettyPrint').addEventListener('click', () => {
 			const singlequote = document.getElementById('singlequote').checked;
-			prettyPrint(singlequote)
+			const accpetnone = document.getElementById('acceptnone').checked;
+			prettyPrint(singlequote, accpetnone)
 		})
 	</script>
 </body>
