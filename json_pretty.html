@@ -42,7 +42,7 @@
 		}
 
 		function replaceNone(input) {
-			return input.replace("None", "null");
+			return input.replaceAll("None", "null");
 		}
 
 		function prettyPrint(allowSingeQuote = True, acceptNone = True) {
