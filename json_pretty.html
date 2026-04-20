@@ -19,6 +19,10 @@
 		<input type="checkbox" id="acceptnone", name="acceptnone", checked>
 		<label for="acceptnone">Accept "None" Keyword</label>
 	</div>
+	<div>
+		<input type="checkbox" id="parsevalue", name="parsevalue", checked>
+		<label for="parsevalue">Try parse json dumped string values</label>
+	</div>
 	<pre id="output"></pre>
 
 	<script>
@@ -45,10 +49,7 @@
 			return input.replaceAll("None", "null");
 		}
 
-		function prettyPrint(allowSingeQuote = True, acceptNone = True) {
-			let input = document.getElementById('input').value;
-			const output = document.getElementById('output');
-
+		function parseJson(input, allowSingeQuote = True, acceptNone = True, parseJsonDumpedValues = False) {
 			if (allowSingeQuote) {
 				input = replaceSingleQuote(input)
 			}
@@ -59,16 +60,32 @@
 
 			try {
 				const obj = JSON.parse(input);
-				output.textContent = JSON.stringify(obj, null, 2);
+
+				if (parseJsonDumpedValues) {
+					for (const [key, value] of Object.entries(obj)) {
+						if (typeof value === 'string' || value instanceof String) {
+							const _parsed = parseJson(value, allowSingeQuote, acceptNone, parseJsonDumpedValues)
+							obj[key] = _parsed
+						}
+					}
+				}
+
+				return obj;
 			} catch (e) {
-				output.textContent = 'Invalid JSON: ' + e.message;
+				return input;
 			}
 		}
 
 		document.getElementById('prettyPrint').addEventListener('click', () => {
 			const singlequote = document.getElementById('singlequote').checked;
 			const accpetnone = document.getElementById('acceptnone').checked;
-			prettyPrint(singlequote, accpetnone)
+			const parsevalue = document.getElementById('parsevalue').checked;
+			const output = document.getElementById('output');
+
+			let input = document.getElementById('input').value;
+
+			const parsed = parseJson(input, singlequote, accpetnone, parsevalue)
+			output.textContent = JSON.stringify(parsed, null, 2);
 		})
 	</script>
 </body>
