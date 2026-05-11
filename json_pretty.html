@@ -16,11 +16,11 @@
 		<label for="singlequote">Allow Single Quote</label>
 	</div>
 	<div>
-		<input type="checkbox" id="acceptnone", name="acceptnone", checked>
+		<input type="checkbox" id="acceptnone" , name="acceptnone" , checked>
 		<label for="acceptnone">Accept "None" Keyword</label>
 	</div>
 	<div>
-		<input type="checkbox" id="parsevalue", name="parsevalue", checked>
+		<input type="checkbox" id="parsevalue" , name="parsevalue" , checked>
 		<label for="parsevalue">Try parse json dumped string values</label>
 	</div>
 	<pre id="output"></pre>
@@ -49,7 +49,7 @@
 			return input.replaceAll("None", "null");
 		}
 
-		function parseJson(input, allowSingeQuote = True, acceptNone = True, parseJsonDumpedValues = False) {
+		function parseJson(input, allowSingeQuote = True, acceptNone = True, parseJsonDumpedValues = False, level = 1) {
 			if (allowSingeQuote) {
 				input = replaceSingleQuote(input)
 			}
@@ -64,7 +64,7 @@
 				if (parseJsonDumpedValues) {
 					for (const [key, value] of Object.entries(obj)) {
 						if (typeof value === 'string' || value instanceof String) {
-							const _parsed = parseJson(value, allowSingeQuote, acceptNone, parseJsonDumpedValues)
+							const _parsed = parseJson(value, allowSingeQuote, acceptNone, parseJsonDumpedValues, level += 2)
 							obj[key] = _parsed
 						}
 					}
@@ -72,6 +72,11 @@
 
 				return obj;
 			} catch (e) {
+				// 만약 json 파싱 에러가 제일 바깥 {} 에서 난다면 에러를 던짐.
+				if (level == 1) {
+					return e.message
+				}
+
 				return input;
 			}
 		}
