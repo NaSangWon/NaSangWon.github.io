@@ -64,7 +64,7 @@
 				if (parseJsonDumpedValues) {
 					for (const [key, value] of Object.entries(obj)) {
 						if (typeof value === 'string' || value instanceof String) {
-							const _parsed = parseJson(value, allowSingeQuote, acceptNone, parseJsonDumpedValues, level += 2)
+							const _parsed = parseJson(value, allowSingeQuote, acceptNone, parseJsonDumpedValues, level += 1)
 							obj[key] = _parsed
 						}
 					}
